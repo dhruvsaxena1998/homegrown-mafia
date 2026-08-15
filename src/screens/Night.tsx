@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react'
 import { Action, QuietAction } from '@/components/Action'
 import { Screen } from '@/components/Screen'
 import { SeatRow } from '@/components/SeatRow'
+import { ConfirmRow } from '@/components/ConfirmRow'
 import { AdjustSheet } from '@/components/AdjustSheet'
 import {
   activeNightRoles,
@@ -13,13 +15,25 @@ import {
 } from '@/domain/engine'
 import type { Game } from '@/domain/types'
 import { useStore } from '@/hooks/useStore'
+import type { RoleId } from '@/domain/roles'
 import { ordinal } from '@/lib/format'
+
+/** Stalling is legal — tables genuinely fail to agree — but never accidental,
+ *  so each skip names the consequence rather than asking "are you sure". */
+const SKIP_QUESTION: Partial<Record<RoleId, string>> = {
+  mafia: 'No one chosen. Nobody dies tonight?',
+  detective: 'No one chosen. The Detective learns nothing?',
+  doctor: 'No one chosen. The Doctor shields nobody?',
+}
 
 export function Night({ game }: { game: Game }) {
   const { dispatch } = useStore()
   const role = currentNightRole(game)
   const step = game.phase.kind === 'night' ? game.phase.step : 0
   const total = activeNightRoles(game).length
+
+  const [confirmSkip, setConfirmSkip] = useState(false)
+  useEffect(() => setConfirmSkip(false), [step])
 
   if (!role) return null
 
@@ -38,18 +52,32 @@ export function Night({ game }: { game: Game }) {
       eyebrow={eyebrow}
       aside={<AdjustSheet game={game} />}
       footer={
-        <>
-          <Action onClick={() => dispatch({ type: 'NIGHT_NEXT' })}>
-            {role.sleepPrompt}
-          </Action>
-          {target && (
-            <QuietAction
-              onClick={() => dispatch({ type: 'SET_TARGET', roleId: role.id, seatId: null })}
+        confirmSkip ? (
+          <ConfirmRow
+            question={SKIP_QUESTION[role.id] ?? `${role.name} does nothing tonight?`}
+            confirmLabel="Skip"
+            tone="secondary"
+            onCancel={() => setConfirmSkip(false)}
+            onConfirm={() => dispatch({ type: 'NIGHT_NEXT' })}
+          />
+        ) : (
+          <>
+            <Action
+              onClick={() =>
+                target ? dispatch({ type: 'NIGHT_NEXT' }) : setConfirmSkip(true)
+              }
             >
-              Clear choice
-            </QuietAction>
-          )}
-        </>
+              {role.sleepPrompt}
+            </Action>
+            {target && (
+              <QuietAction
+                onClick={() => dispatch({ type: 'SET_TARGET', roleId: role.id, seatId: null })}
+              >
+                Clear choice
+              </QuietAction>
+            )}
+          </>
+        )
       }
     >
       <div className="flex flex-col gap-2 pb-6">

@@ -1,22 +1,27 @@
 import { useEffect, useState } from 'react'
 import { Screen } from '@/components/Screen'
-import { Action } from '@/components/Action'
+import { Action, QuietAction } from '@/components/Action'
+import { ConfirmRow } from '@/components/ConfirmRow'
 import { RoleCard } from '@/components/RoleCard'
 import { useHoldToReveal } from '@/hooks/useHoldToReveal'
-import { alliesFor } from '@/domain/engine'
+import { alliesFor, canUndo } from '@/domain/engine'
 import type { Game } from '@/domain/types'
 import { useStore } from '@/hooks/useStore'
 import { cn } from '@/lib/utils'
 
 export function Deal({ game }: { game: Game }) {
-  const { dispatch } = useStore()
+  const { store, dispatch } = useStore()
   const index = game.phase.kind === 'deal' ? game.phase.index : 0
   const seat = game.seats[index]
 
   const [everRevealed, setEverRevealed] = useState(false)
+  const [confirmBack, setConfirmBack] = useState(false)
   const hold = useHoldToReveal(true)
 
-  useEffect(() => setEverRevealed(false), [index])
+  useEffect(() => {
+    setEverRevealed(false)
+    setConfirmBack(false)
+  }, [index])
   useEffect(() => {
     if (hold.revealed) setEverRevealed(true)
   }, [hold.revealed])
@@ -30,14 +35,33 @@ export function Deal({ game }: { game: Game }) {
       ground="night"
       eyebrow={`Card ${index + 1} of ${game.seats.length}`}
       footer={
-        <Action
-          variant={everRevealed ? 'solid' : 'quiet'}
-          disabled={!everRevealed}
-          marker={everRevealed ? '→' : null}
-          onClick={() => dispatch({ type: 'DEAL_NEXT' })}
-        >
-          {everRevealed ? 'Done — pass on' : 'Read your card first'}
-        </Action>
+        confirmBack ? (
+          // Named, and confirmed, on purpose: stepping back re-opens someone
+          // else's card, so it should be a deliberate move the table can see.
+          <ConfirmRow
+            question={`Go back to ${game.seats[index - 1]?.name}'s card?`}
+            confirmLabel="Go back"
+            tone="secondary"
+            onCancel={() => setConfirmBack(false)}
+            onConfirm={() => dispatch({ type: 'UNDO' })}
+          />
+        ) : (
+          <>
+            <Action
+              variant={everRevealed ? 'solid' : 'quiet'}
+              disabled={!everRevealed}
+              marker={everRevealed ? '→' : null}
+              onClick={() => dispatch({ type: 'DEAL_NEXT' })}
+            >
+              {everRevealed ? 'Done — pass on' : 'Read your card first'}
+            </Action>
+            {index > 0 && canUndo(store) && (
+              <QuietAction onClick={() => setConfirmBack(true)}>
+                Back a card
+              </QuietAction>
+            )}
+          </>
+        )
       }
       className="justify-center"
     >

@@ -22,6 +22,22 @@ function readRaw(): string | null {
 }
 
 /**
+ * A store written by a different version of the app.
+ *
+ * The roster and past games are flat records that survive almost any change,
+ * so they are carried across. A game in progress depends on the exact shape of
+ * every phase and log entry, so it is dropped rather than half-read — losing
+ * tonight's deal is bad, but resuming into a corrupt one is worse.
+ */
+function migrate(parsed: Partial<Store>): Store {
+  return {
+    ...EMPTY_STORE,
+    roster: Array.isArray(parsed.roster) ? parsed.roster : [],
+    history: Array.isArray(parsed.history) ? parsed.history : [],
+  }
+}
+
+/**
  * The whole store is written after every action. A game in progress cannot be
  * reconstructed if it is lost — the deal is unrepeatable — so persistence is
  * write-through rather than debounced.
@@ -31,17 +47,23 @@ export function loadStore(): Store {
     const raw = readRaw()
     if (!raw) return EMPTY_STORE
     const parsed = JSON.parse(raw) as Store
-    if (parsed.version !== STORE_VERSION) return EMPTY_STORE
+    if (parsed.version !== STORE_VERSION) return migrate(parsed)
     return { ...EMPTY_STORE, ...parsed }
   } catch {
     return EMPTY_STORE
   }
 }
 
-export function saveStore(store: Store): void {
+/**
+ * Returns false when the write did not land — storage full, or blocked in
+ * private mode. The game continues in memory either way, but the host needs to
+ * know the phone is now the only copy.
+ */
+export function saveStore(store: Store): boolean {
   try {
     localStorage.setItem(KEY, JSON.stringify(store))
+    return true
   } catch {
-    // Storage full or blocked (private mode). The game continues in memory.
+    return false
   }
 }
