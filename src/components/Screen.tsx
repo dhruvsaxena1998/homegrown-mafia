@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 import { RulesSheet } from '@/components/RulesSheet'
+import { QuitGame } from '@/components/QuitGame'
+import { useStore } from '@/hooks/useStore'
 import { cn } from '@/lib/utils'
 
 export type Ground = 'night' | 'day' | 'reveal'
@@ -27,6 +29,8 @@ type Props = {
  * and one thumb-reachable action. The ground repaints with the phase.
  */
 export function Screen({ ground, eyebrow, aside, children, footer, className }: Props) {
+  const { saveFailed } = useStore()
+
   return (
     <div
       className={cn(
@@ -46,8 +50,24 @@ export function Screen({ ground, eyebrow, aside, children, footer, className }: 
         <span className="flex shrink-0 items-center gap-3.5">
           {aside}
           <RulesSheet />
+          <QuitGame />
         </span>
       </header>
+
+      {/* Persistent, not a toast: if the deal only exists in memory the host
+          needs to know for the rest of the game, not for four seconds. */}
+      {saveFailed && (
+        <div
+          role="status"
+          className="relative z-10 mx-6 mb-2 rounded-md border border-stamp/40 bg-card px-3 py-2"
+        >
+          <p className="text-xs leading-relaxed text-foreground/80">
+            <span className="eyebrow text-stamp-bright">Not saved</span> — this
+            phone has no storage room. Do not close the app; the game would be
+            lost.
+          </p>
+        </div>
+      )}
 
       <main
         className={cn(
@@ -58,8 +78,10 @@ export function Screen({ ground, eyebrow, aside, children, footer, className }: 
         {children}
       </main>
 
+      {/* The home-indicator inset is the only thing that should lift the action
+          off the bottom edge — the 0.5rem floor is for phones reporting none. */}
       {footer && (
-        <footer className="relative z-10 flex flex-col gap-2 px-6 pt-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+        <footer className="relative z-10 flex shrink-0 flex-col gap-2 px-6 pt-4 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           {/* Content scrolls under the action; fade it out rather than clip it. */}
           <div
             aria-hidden

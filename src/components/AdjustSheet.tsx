@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { SeatRow } from '@/components/SeatRow'
+import { ConfirmRow } from '@/components/ConfirmRow'
 import { RoleCard } from '@/components/RoleCard'
 import { HoldSeal } from '@/components/HoldSeal'
 import { SLOW_HOLD_MS, useHoldToReveal } from '@/hooks/useHoldToReveal'
@@ -28,14 +29,12 @@ export function AdjustSheet({ game }: { game: Game }) {
   const [view, setView] = useState<View>('menu')
   const [pending, setPending] = useState<string | null>(null)
   const [showing, setShowing] = useState<Seat | null>(null)
-  const [confirmAbandon, setConfirmAbandon] = useState(false)
 
   useEffect(() => {
     if (!open) {
       setView('menu')
       setPending(null)
       setShowing(null)
-      setConfirmAbandon(false)
     }
   }, [open])
 
@@ -77,35 +76,23 @@ export function AdjustSheet({ game }: { game: Game }) {
                 <span className="eyebrow text-muted-foreground">Roll call</span>
                 {game.seats.map((seat, i) =>
                   pending === seat.id ? (
-                    <div
+                    <ConfirmRow
                       key={seat.id}
-                      className="flex items-center gap-2 rounded-md border border-stamp/40 bg-card px-3 py-2.5"
-                    >
-                      <span className="flex-1 truncate text-sm">
-                        {seat.alive ? `Kill ${seat.name}?` : `Bring ${seat.name} back?`}
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setPending(null)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={seat.alive ? 'destructive' : 'secondary'}
-                        onClick={() => {
-                          dispatch(
-                            seat.alive
-                              ? { type: 'ADJUST_KILL', seatId: seat.id }
-                              : { type: 'ADJUST_REVIVE', seatId: seat.id },
-                          )
-                          setPending(null)
-                        }}
-                      >
-                        {seat.alive ? 'Kill' : 'Revive'}
-                      </Button>
-                    </div>
+                      question={
+                        seat.alive ? `Kill ${seat.name}?` : `Bring ${seat.name} back?`
+                      }
+                      confirmLabel={seat.alive ? 'Kill' : 'Revive'}
+                      tone={seat.alive ? 'destructive' : 'secondary'}
+                      onCancel={() => setPending(null)}
+                      onConfirm={() => {
+                        dispatch(
+                          seat.alive
+                            ? { type: 'ADJUST_KILL', seatId: seat.id }
+                            : { type: 'ADJUST_REVIVE', seatId: seat.id },
+                        )
+                        setPending(null)
+                      }}
+                    />
                   ) : (
                     <SeatRow
                       key={seat.id}
@@ -120,39 +107,15 @@ export function AdjustSheet({ game }: { game: Game }) {
                 )}
               </section>
 
-              <div className="flex flex-col gap-2">
-                <Button
-                  variant="ghost"
-                  className="h-12 w-full text-muted-foreground"
-                  onClick={() => setView('pick')}
-                >
-                  Show someone their card again
-                </Button>
-
-                {confirmAbandon ? (
-                  <div className="flex items-center gap-2 rounded-md border border-stamp/40 bg-card px-3 py-2.5">
-                    <span className="flex-1 text-sm">Abandon and lose the deal?</span>
-                    <Button size="sm" variant="ghost" onClick={() => setConfirmAbandon(false)}>
-                      Cancel
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => dispatch({ type: 'ABANDON_GAME' })}
-                    >
-                      Abandon
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    className="h-12 w-full text-stamp-bright"
-                    onClick={() => setConfirmAbandon(true)}
-                  >
-                    Abandon this game
-                  </Button>
-                )}
-              </div>
+              {/* Ending the game lives in the header now (✕), next to the
+                  rules, so it is reachable without opening this sheet. */}
+              <Button
+                variant="ghost"
+                className="h-12 w-full text-muted-foreground"
+                onClick={() => setView('pick')}
+              >
+                Show someone their card again
+              </Button>
             </div>
           )}
 

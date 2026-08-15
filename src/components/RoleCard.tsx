@@ -1,5 +1,5 @@
 import { ROLES } from '@/domain/roles'
-import type { Alignment, RoleId } from '@/domain/roles'
+import type { RoleId } from '@/domain/roles'
 import { cn } from '@/lib/utils'
 
 type Props = {
@@ -9,30 +9,19 @@ type Props = {
   progress: number
 }
 
-/** Derived from alignment so a new role never states a wrong win condition. */
-const WIN_TEXT: Record<Alignment, string> = {
-  mafia: 'When the Mafia are as many as everyone else left alive.',
-  town: 'When every last Mafia is voted out or gone.',
-}
-
 const prefersReducedMotion = () =>
   typeof window !== 'undefined' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-function Line({ label, children }: { label: string; children: string }) {
-  return (
-    <div className="flex gap-3">
-      <span className="eyebrow w-[4.25rem] shrink-0 pt-[0.2rem] text-muted-foreground">
-        {label}
-      </span>
-      <span className="flex-1 text-[0.8125rem] leading-snug">{children}</span>
-    </div>
-  )
-}
-
 /**
  * The one lit surface in the app. It stays illegible for most of the hold and
  * blooms at the end, so a glance over a shoulder never resolves into a role.
+ *
+ * Deliberately sparse. This is read once, in a dark loud room, by someone
+ * holding a thumb down and aware the whole table is waiting on them — so it
+ * carries only the role, one line of what it means, and the Mafia's allies.
+ * How a role plays at night is re-narrated by the host every round anyway
+ * (`wakePrompt`), and the full detail lives one tap away in the rules sheet.
  */
 export function RoleCard({ roleId, allyNames, progress }: Props) {
   const role = ROLES[roleId]
@@ -50,7 +39,7 @@ export function RoleCard({ roleId, allyNames, progress }: Props) {
       }}
       aria-hidden={developed < 1}
     >
-      <div className="flex flex-col gap-4 px-6 py-7">
+      <div className="flex flex-col gap-5 px-6 py-9">
         <div className="flex items-baseline justify-between gap-3">
           <span className="eyebrow text-muted-foreground">Your role</span>
           {/* The Mafia card's headline already names the side; only town roles
@@ -64,25 +53,18 @@ export function RoleCard({ roleId, allyNames, progress }: Props) {
             wastes the accent and misreads at a glance. */}
         <h2
           className={cn(
-            'display-lg',
+            'display-xl leading-[0.9]',
             role.alignment === 'mafia' ? 'text-stamp' : 'text-foreground',
           )}
         >
           {role.name}
         </h2>
 
-        <p className="text-[0.875rem] leading-snug text-foreground/80">
+        <p className="text-[0.9375rem] leading-snug text-foreground/75">
           {role.cardText}
         </p>
 
-        <div className="h-px w-full bg-foreground/15" />
-
-        <div className="flex flex-col gap-2.5">
-          <Line label="At night">{role.nightText}</Line>
-          <Line label="By day">{role.dayText}</Line>
-          <Line label="You win">{WIN_TEXT[role.alignment]}</Line>
-        </div>
-
+        {/* The only thing on this card nobody else will ever tell them. */}
         {allyNames.length > 0 && (
           <>
             <div className="h-px w-full bg-foreground/15" />
@@ -90,9 +72,9 @@ export function RoleCard({ roleId, allyNames, progress }: Props) {
               <span className="eyebrow w-[4.25rem] shrink-0 pt-[0.2rem] text-muted-foreground">
                 With you
               </span>
-              <span className="flex flex-1 flex-col gap-0.5">
+              <span className="flex flex-1 flex-col gap-1">
                 {allyNames.map((name) => (
-                  <span key={name} className="font-mono text-[0.8125rem] tracking-tight">
+                  <span key={name} className="font-mono text-sm tracking-tight">
                     {name}
                   </span>
                 ))}

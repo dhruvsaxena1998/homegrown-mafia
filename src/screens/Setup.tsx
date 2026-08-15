@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Action, QuietAction } from '@/components/Action'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,10 +13,117 @@ import {
   isPlayableCount,
 } from '@/domain/distribution'
 import { newId } from '@/domain/engine'
+import type { Person } from '@/domain/types'
 import { useStore } from '@/hooks/useStore'
 import { cn } from '@/lib/utils'
 
 type Step = 'who' | 'host'
+
+/** Mono glyphs rather than icons: the roll call is already a typed list. */
+function RowButton({
+  label,
+  glyph,
+  disabled,
+  tone = 'muted',
+  onClick,
+}: {
+  label: string
+  glyph: string
+  disabled?: boolean
+  tone?: 'muted' | 'stamp'
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        'grid size-9 shrink-0 place-items-center rounded-md font-mono text-sm',
+        'transition-colors active:bg-accent',
+        tone === 'stamp' ? 'text-stamp-bright' : 'text-muted-foreground',
+        disabled && 'pointer-events-none opacity-25',
+      )}
+    >
+      {glyph}
+    </button>
+  )
+}
+
+/**
+ * A roster line in edit mode. The name is a draft until it is committed, so
+ * clearing the field to retype does not trip the reducer's empty-name guard.
+ */
+function EditRow({
+  person,
+  index,
+  first,
+  last,
+  duplicate,
+  onRemove,
+}: {
+  person: Person
+  index: number
+  first: boolean
+  last: boolean
+  duplicate: boolean
+  onRemove: () => void
+}) {
+  const { dispatch } = useStore()
+  const [draft, setDraft] = useState(person.name)
+
+  // Reordering rebinds this row to a different person.
+  useEffect(() => setDraft(person.name), [person.name])
+
+  const commit = () => {
+    const name = draft.trim()
+    if (!name) return setDraft(person.name)
+    if (name !== person.name) dispatch({ type: 'RENAME_PERSON', id: person.id, name })
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-1 rounded-md border border-border bg-card/45 py-1.5 pr-1 pl-4">
+        <span className="font-mono text-xs tabular-nums text-muted-foreground">
+          {String(index).padStart(2, '0')}
+        </span>
+        <Input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+          aria-label={`Rename ${person.name}`}
+          autoComplete="off"
+          enterKeyHint="done"
+          className="h-10 min-w-0 flex-1 border-0 bg-transparent px-2 shadow-none focus-visible:ring-0"
+        />
+        <RowButton
+          label={`Move ${person.name} up`}
+          glyph="↑"
+          disabled={first}
+          onClick={() => dispatch({ type: 'MOVE_PERSON', id: person.id, delta: -1 })}
+        />
+        <RowButton
+          label={`Move ${person.name} down`}
+          glyph="↓"
+          disabled={last}
+          onClick={() => dispatch({ type: 'MOVE_PERSON', id: person.id, delta: 1 })}
+        />
+        <RowButton
+          label={`Remove ${person.name}`}
+          glyph="✕"
+          tone="stamp"
+          onClick={onRemove}
+        />
+      </div>
+      {/* The host calls people by name all night; two Sams is a real problem. */}
+      {duplicate && (
+        <span className="eyebrow px-4 text-stamp-bright">Same name as someone else</span>
+      )}
+    </div>
+  )
+}
 
 export function Setup({ onCancel }: { onCancel: () => void }) {
   const { store, dispatch } = useStore()
@@ -61,6 +168,25 @@ export function Setup({ onCancel }: { onCancel: () => void }) {
   }
 
   const allSelected = store.roster.length > 0 && chosen.length === store.roster.length
+
+  const duplicateNames = useMemo(() => {
+    const seen = new Set<string>()
+    const dupes = new Set<string>()
+    for (const p of store.roster) {
+      const key = p.name.trim().toLowerCase()
+      if (seen.has(key)) dupes.add(key)
+      seen.add(key)
+    }
+    return dupes
+  }, [store.roster])
+
+  const removePerson = (id: string) => {
+    dispatch({ type: 'REMOVE_PERSON', id })
+    const next = new Set(selected)
+    next.delete(id)
+    setSelected(next)
+    if (hostId === id) setHostId(null)
+  }
 
   if (step === 'who') {
     return (
@@ -115,9 +241,11 @@ export function Setup({ onCancel }: { onCancel: () => void }) {
         <div className="flex flex-col gap-2 pb-6">
           <h1 className="display-lg">Who is here</h1>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            {store.roster.length > 0
-              ? 'Everyone is in. Untap whoever did not turn up. One of them hosts and sits out, so six is the minimum.'
-              : 'Add everyone playing tonight. One of them hosts and sits out, so six is the minimum.'}
+            {editing
+              ? 'Fix a spelling, put the roll call in seating order, or drop someone who has stopped coming.'
+              : store.roster.length > 0
+                ? 'Everyone is in. Untap whoever did not turn up. One of them hosts and sits out, so six is the minimum.'
+                : 'Add everyone playing tonight. One of them hosts and sits out, so six is the minimum.'}
           </p>
         </div>
 
@@ -144,19 +272,14 @@ export function Setup({ onCancel }: { onCancel: () => void }) {
         <div className="flex flex-col gap-2 pb-4">
           {store.roster.map((person, i) =>
             editing ? (
-              <SeatRow
+              <EditRow
                 key={person.id}
+                person={person}
                 index={i + 1}
-                name={person.name}
-                tag="Remove"
-                tagTone="stamp"
-                onClick={() => {
-                  dispatch({ type: 'REMOVE_PERSON', id: person.id })
-                  const next = new Set(selected)
-                  next.delete(person.id)
-                  setSelected(next)
-                  if (hostId === person.id) setHostId(null)
-                }}
+                first={i === 0}
+                last={i === store.roster.length - 1}
+                duplicate={duplicateNames.has(person.name.trim().toLowerCase())}
+                onRemove={() => removePerson(person.id)}
               />
             ) : (
               <SeatRow

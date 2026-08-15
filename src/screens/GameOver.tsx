@@ -1,7 +1,10 @@
-import { Action } from '@/components/Action'
+import { useState } from 'react'
+import { Action, QuietAction } from '@/components/Action'
+import { ConfirmRow } from '@/components/ConfirmRow'
 import { Screen } from '@/components/Screen'
 import { ROLES } from '@/domain/roles'
 import type { Alignment } from '@/domain/roles'
+import { canUndo } from '@/domain/engine'
 import type { Game } from '@/domain/types'
 import { useStore } from '@/hooks/useStore'
 import { cn } from '@/lib/utils'
@@ -18,7 +21,8 @@ const SUBHEAD: Record<Alignment, string> = {
 }
 
 export function GameOver({ game }: { game: Game }) {
-  const { dispatch } = useStore()
+  const { store, dispatch } = useStore()
+  const [confirmUndo, setConfirmUndo] = useState(false)
   const winner = game.phase.kind === 'over' ? game.phase.winner : 'town'
 
   return (
@@ -26,9 +30,29 @@ export function GameOver({ game }: { game: Game }) {
       ground="reveal"
       eyebrow={`Ended on the ${ordinal(game.dayNumber)} day`}
       footer={
-        <Action onClick={() => dispatch({ type: 'ARCHIVE_GAME', now: Date.now() })}>
-          Save and finish
-        </Action>
+        confirmUndo ? (
+          <ConfirmRow
+            question="Take back the last action and keep playing?"
+            confirmLabel="Undo"
+            tone="secondary"
+            onCancel={() => setConfirmUndo(false)}
+            onConfirm={() => dispatch({ type: 'UNDO' })}
+          />
+        ) : (
+          <>
+            <Action onClick={() => dispatch({ type: 'ARCHIVE_GAME', now: Date.now() })}>
+              Save and finish
+            </Action>
+            {/* A mistyped lynch or a stray tap in Roll Call can end a game that
+                was not over. Undo restores an exact earlier state, which is the
+                only recovery from here with a well-defined answer. */}
+            {canUndo(store) && (
+              <QuietAction onClick={() => setConfirmUndo(true)}>
+                Undo last action
+              </QuietAction>
+            )}
+          </>
+        )
       }
     >
       <div className="flex flex-col gap-4 pb-8">

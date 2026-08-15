@@ -1,6 +1,6 @@
 import { NIGHT_ORDER, ROLES } from './roles'
 import type { Alignment, RoleDef, RoleId } from './roles'
-import { distributionFor } from './distribution'
+import { distributionFor, isPlayableCount } from './distribution'
 import { EMPTY_NIGHT, EMPTY_STORE, STORE_VERSION } from './types'
 import type {
   DeathCause,
@@ -126,6 +126,9 @@ export type Action =
   | { type: 'ADD_PERSON'; id: string; name: string }
   | { type: 'RENAME_PERSON'; id: string; name: string }
   | { type: 'REMOVE_PERSON'; id: string }
+  /** Swaps with the neighbour above (-1) or below (+1). The roster's order is
+   *  the order the host reads names in, so it is worth controlling. */
+  | { type: 'MOVE_PERSON'; id: string; delta: -1 | 1 }
   | {
       type: 'START_GAME'
       personIds: string[]
@@ -260,13 +263,24 @@ export function reduce(store: Store, action: Action): Store {
     case 'REMOVE_PERSON':
       return { ...store, roster: store.roster.filter((p) => p.id !== action.id) }
 
+    case 'MOVE_PERSON': {
+      const from = store.roster.findIndex((p) => p.id === action.id)
+      const to = from + action.delta
+      if (from < 0 || to < 0 || to >= store.roster.length) return store
+      const roster = store.roster.slice()
+      ;[roster[from], roster[to]] = [roster[to], roster[from]]
+      return { ...store, roster }
+    }
+
     case 'START_GAME': {
       const playing = action.personIds
         .filter((id) => id !== action.hostId)
         .map((id) => store.roster.find((p) => p.id === id))
         .filter((p): p is Person => Boolean(p))
       const host = store.roster.find((p) => p.id === action.hostId)
-      if (!host || playing.length === 0) return store
+      // The playable range is a rule, not a UI detail: below it the
+      // distribution yields a negative Civilian count and deals a short deck.
+      if (!host || !isPlayableCount(playing.length)) return store
 
       const game: Game = {
         id: uid(),
