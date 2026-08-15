@@ -9,7 +9,11 @@
     />
     <meta name="theme-color" content="#0d1018" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- Not black-translucent: that makes the web view render full-screen while
+         iOS still reports a viewport shortened by the status bar, so a 100dvh
+         shell ends an inset-height above the bottom edge. Nothing here wants to
+         sit under the status bar anyway — the header already clears it. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-title" content="Homegrown Mafia" />
     <meta
       name="description"
