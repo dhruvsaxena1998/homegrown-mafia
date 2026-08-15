@@ -1,4 +1,4 @@
-# Nightfall
+# Homegrown Mafia
 
 Pass-and-play Mafia for one phone. Deals the cards, runs the night, keeps the
 roll call, and works offline. No backend, no accounts — everything lives in
@@ -62,10 +62,12 @@ dealt a card, so the playing count is always **selected people − 1**.
 
 1. **Setup** — pick who is here from the saved roster, then pick the host. The
    deal is shown before you commit to it.
-2. **Deal** — the phone goes round in order. Each player taps their own name,
-   then presses and holds for three seconds to bring their card up out of the
-   dark. Releasing early sinks it back, so a glance never resolves into a role.
-   Mafia cards name their partners.
+2. **Deal** — the phone goes round in order. The screen names who it is for;
+   that player holds the card to bring it up out of the dark and lets go to
+   sink it back. The card stays illegible for most of the hold and only blooms
+   at the end, so a glance over a shoulder never resolves into a role. Each
+   card explains what the role does at night, by day, and how it wins. Mafia
+   cards name their partners.
 3. **Night** — Mafia, then Detective, then Doctor. The host reads each prompt
    aloud and taps what the room pointed at. The Detective's answer fills the
    screen as `MAFIA` / `NOT MAFIA` for the host to signal with a thumb.
@@ -95,6 +97,10 @@ outnumber everyone else.
 
 Two things are configurable at setup: whether a dead player's role is announced
 (default on), and who hosts.
+
+The full rules are in the app behind the **?** in the top right of every screen.
+That sheet renders from the role registry and the count table rather than from
+prose, so it cannot drift from what the engine actually does.
 
 ## Recovering from mistakes
 

@@ -56,7 +56,7 @@ prompt = no
 
 [dn]
 CN = ${names[1] ?? 'localhost'}
-O = Nightfall dev
+O = Homegrown Mafia dev
 
 [v3]
 basicConstraints = critical, CA:FALSE

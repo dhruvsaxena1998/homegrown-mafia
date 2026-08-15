@@ -31,12 +31,13 @@ export function Home({
       }
     >
       <div className="flex flex-col gap-6 pb-20">
+        {/* The accent lands on the word it belongs to, so the wordmark carries
+            the red rather than a separate rule underneath it. */}
         <h1 className="display-xl leading-[0.82]">
-          Night
+          Homegrown
           <br />
-          fall
+          <span className="text-stamp">Mafia</span>
         </h1>
-        <div className="h-px w-16 bg-stamp" />
         <p className="max-w-[26ch] text-[0.9375rem] leading-relaxed text-muted-foreground">
           One phone, one host, and everyone else in the dark. Deal the cards, run
           the night, and let the table argue.

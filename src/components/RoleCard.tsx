@@ -31,7 +31,7 @@ function Line({ label, children }: { label: string; children: string }) {
 }
 
 /**
- * The one lit surface in Nightfall. It stays illegible for most of the hold and
+ * The one lit surface in the app. It stays illegible for most of the hold and
  * blooms at the end, so a glance over a shoulder never resolves into a role.
  */
 export function RoleCard({ roleId, allyNames, progress }: Props) {

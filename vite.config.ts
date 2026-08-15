@@ -36,8 +36,8 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
       },
       manifest: {
-        name: 'Nightfall — pass-and-play Mafia',
-        short_name: 'Nightfall',
+        name: 'Homegrown Mafia',
+        short_name: 'Homegrown',
         description:
           'Pass-and-play Mafia for one phone. Deals the cards, runs the night, works offline.',
         theme_color: '#0d1018',
