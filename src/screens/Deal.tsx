@@ -7,16 +7,18 @@ import { useHoldToReveal } from '@/hooks/useHoldToReveal'
 import { alliesFor, canUndo } from '@/domain/engine'
 import type { Game } from '@/domain/types'
 import { useStore } from '@/hooks/useStore'
+import { useHaptics } from '@/hooks/useHaptics'
 import { cn } from '@/lib/utils'
 
 export function Deal({ game }: { game: Game }) {
   const { store, dispatch } = useStore()
+  const haptics = useHaptics()
   const index = game.phase.kind === 'deal' ? game.phase.index : 0
   const seat = game.seats[index]
 
   const [everRevealed, setEverRevealed] = useState(false)
   const [confirmBack, setConfirmBack] = useState(false)
-  const hold = useHoldToReveal(true)
+  const hold = useHoldToReveal(true, undefined, () => haptics.reveal())
 
   useEffect(() => {
     setEverRevealed(false)

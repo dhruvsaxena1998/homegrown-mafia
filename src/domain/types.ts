@@ -58,6 +58,8 @@ export type Game = {
   hostId: string
   hostName: string
   revealRoleOnDeath: boolean
+  /** Seconds the host gets for the day argument, 0 for no timer. */
+  dayTimerSeconds: number
   seats: Seat[]
   /** 1-based. Night 1 is the opening phase. */
   dayNumber: number

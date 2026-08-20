@@ -3,13 +3,16 @@ import { Action, QuietAction } from '@/components/Action'
 import { Screen } from '@/components/Screen'
 import { SeatRow } from '@/components/SeatRow'
 import { AdjustSheet } from '@/components/AdjustSheet'
+import { DayTimer } from '@/components/DayTimer'
 import { aliveCounts, livingSeats, seatNumber } from '@/domain/engine'
 import type { Game } from '@/domain/types'
 import { useStore } from '@/hooks/useStore'
+import { useHaptics } from '@/hooks/useHaptics'
 import { ordinal } from '@/lib/format'
 
 export function Day({ game }: { game: Game }) {
   const { dispatch } = useStore()
+  const haptics = useHaptics()
   const [selected, setSelected] = useState<string | null>(null)
   const living = livingSeats(game)
   const { mafia } = aliveCounts(game)
@@ -45,6 +48,10 @@ export function Day({ game }: { game: Game }) {
           {mafia} mafia still among {living.length}
         </p>
       </div>
+
+      {game.dayTimerSeconds > 0 && (
+        <DayTimer seconds={game.dayTimerSeconds} onExpire={() => haptics.alert()} />
+      )}
 
       <div className="flex flex-col gap-2 pb-4">
         {living.map((seat) => (
