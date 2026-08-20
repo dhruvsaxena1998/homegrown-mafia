@@ -134,6 +134,7 @@ export type Action =
       personIds: string[]
       hostId: string
       revealRoleOnDeath: boolean
+      dayTimerSeconds: number
       now: number
     }
   | { type: 'DEAL_NEXT' }
@@ -288,6 +289,7 @@ export function reduce(store: Store, action: Action): Store {
         hostId: host.id,
         hostName: host.name,
         revealRoleOnDeath: action.revealRoleOnDeath,
+        dayTimerSeconds: action.dayTimerSeconds,
         seats: dealSeats(playing),
         dayNumber: 1,
         phase: { kind: 'deal', index: 0 },

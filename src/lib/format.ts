@@ -33,3 +33,11 @@ export function formatDate(ms: number): string {
     year: 'numeric',
   })
 }
+
+/** Countdown readout for the day timer: `m:ss`, never negative. */
+export function formatClock(totalSeconds: number): string {
+  const s = Math.max(0, Math.round(totalSeconds))
+  const mins = Math.floor(s / 60)
+  const secs = s % 60
+  return `${mins}:${String(secs).padStart(2, '0')}`
+}

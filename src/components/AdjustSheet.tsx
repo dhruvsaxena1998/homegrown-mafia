@@ -16,6 +16,7 @@ import { SLOW_HOLD_MS, useHoldToReveal } from '@/hooks/useHoldToReveal'
 import { alliesFor, canUndo } from '@/domain/engine'
 import type { Game, Seat } from '@/domain/types'
 import { useStore } from '@/hooks/useStore'
+import { useHaptics } from '@/hooks/useHaptics'
 
 type View = 'menu' | 'pick' | 'card'
 
@@ -162,8 +163,9 @@ function ReshowCard({
   seat: Seat
   onDone: () => void
 }) {
+  const haptics = useHaptics()
   // Slow on purpose: a re-read is conspicuous, and everyone can see it taking.
-  const hold = useHoldToReveal(true, SLOW_HOLD_MS)
+  const hold = useHoldToReveal(true, SLOW_HOLD_MS, () => haptics.reveal())
   const allies = alliesFor(game, seat).map((s) => s.name)
 
   return (

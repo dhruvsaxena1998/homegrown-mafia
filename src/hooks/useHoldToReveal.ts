@@ -25,11 +25,25 @@ type Hold = {
  * back instantly. Progress is driven frame by frame so the card develops
  * continuously rather than cross-fading between two states.
  */
-export function useHoldToReveal(enabled = true, holdMs = DEAL_HOLD_MS): Hold {
+export function useHoldToReveal(
+  enabled = true,
+  holdMs = DEAL_HOLD_MS,
+  onReveal?: () => void,
+): Hold {
   const [progress, setProgress] = useState(0)
   const [holding, setHolding] = useState(false)
   const frame = useRef<number | null>(null)
   const startedAt = useRef(0)
+  const firedRef = useRef(false)
+  const onRevealRef = useRef(onReveal)
+  onRevealRef.current = onReveal
+
+  /** Fires at most once per hold, so a held card never buzzes repeatedly. */
+  const fireReveal = useCallback(() => {
+    if (firedRef.current) return
+    firedRef.current = true
+    onRevealRef.current?.()
+  }, [])
 
   const stop = useCallback(() => {
     if (frame.current !== null) cancelAnimationFrame(frame.current)
@@ -42,22 +56,28 @@ export function useHoldToReveal(enabled = true, holdMs = DEAL_HOLD_MS): Hold {
     const elapsed = performance.now() - startedAt.current
     const next = Math.min(1, elapsed / holdMs)
     setProgress(next)
-    if (next < 1) frame.current = requestAnimationFrame(tick)
-  }, [holdMs])
+    if (next >= 1) {
+      fireReveal()
+      return
+    }
+    frame.current = requestAnimationFrame(tick)
+  }, [holdMs, fireReveal])
 
   const start = useCallback(
     (e: React.PointerEvent) => {
       if (!enabled) return
       e.preventDefault()
+      firedRef.current = false
       setHolding(true)
       if (holdMs <= 0) {
         setProgress(1)
+        fireReveal()
         return
       }
       startedAt.current = performance.now()
       frame.current = requestAnimationFrame(tick)
     },
-    [enabled, holdMs, tick],
+    [enabled, holdMs, tick, fireReveal],
   )
 
   useEffect(() => () => stop(), [stop])

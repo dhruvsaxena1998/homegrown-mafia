@@ -19,6 +19,14 @@ import { cn } from '@/lib/utils'
 
 type Step = 'who' | 'host'
 
+/** Soft aid only — the host still records the vote. Keep the choices few. */
+const DAY_TIMER_OPTIONS = [
+  { label: 'Off', seconds: 0 },
+  { label: '2 min', seconds: 120 },
+  { label: '3 min', seconds: 180 },
+  { label: '5 min', seconds: 300 },
+]
+
 /** Mono glyphs rather than icons: the roll call is already a typed list. */
 function RowButton({
   label,
@@ -135,6 +143,7 @@ export function Setup({ onCancel }: { onCancel: () => void }) {
   )
   const [hostId, setHostId] = useState<string | null>(null)
   const [revealRoleOnDeath, setRevealRoleOnDeath] = useState(true)
+  const [dayTimerSeconds, setDayTimerSeconds] = useState(0)
   const [draftName, setDraftName] = useState('')
   const [editing, setEditing] = useState(false)
 
@@ -321,6 +330,7 @@ export function Setup({ onCancel }: { onCancel: () => void }) {
                 personIds: chosen.map((p) => p.id),
                 hostId,
                 revealRoleOnDeath,
+                dayTimerSeconds,
                 now: Date.now(),
               })
             }
@@ -374,6 +384,32 @@ export function Setup({ onCancel }: { onCancel: () => void }) {
         </span>
         <Switch checked={revealRoleOnDeath} onCheckedChange={setRevealRoleOnDeath} />
       </label>
+
+      <div className="mb-5 flex flex-col gap-3 rounded-md border border-border bg-card/45 px-4 py-4">
+        <span className="flex flex-col gap-1">
+          <span className="text-sm font-medium">Day argument timer</span>
+          <span className="text-xs leading-relaxed text-muted-foreground">
+            Counts the floor down. The host still records the vote by hand.
+          </span>
+        </span>
+        <div className="flex gap-2">
+          {DAY_TIMER_OPTIONS.map((opt) => (
+            <button
+              key={opt.seconds}
+              type="button"
+              onClick={() => setDayTimerSeconds(opt.seconds)}
+              className={cn(
+                'h-10 flex-1 rounded-md border font-mono text-sm transition-colors active:bg-accent',
+                dayTimerSeconds === opt.seconds
+                  ? 'border-foreground/30 bg-background/60 text-foreground'
+                  : 'border-border bg-background/20 text-muted-foreground',
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <span className="eyebrow pb-3 text-muted-foreground">Who sits out and hosts</span>
       <div className="flex flex-col gap-2 pb-4">

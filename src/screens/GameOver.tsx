@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Action, QuietAction } from '@/components/Action'
 import { ConfirmRow } from '@/components/ConfirmRow'
 import { Screen } from '@/components/Screen'
@@ -7,6 +7,7 @@ import type { Alignment } from '@/domain/roles'
 import { canUndo } from '@/domain/engine'
 import type { Game } from '@/domain/types'
 import { useStore } from '@/hooks/useStore'
+import { useHaptics } from '@/hooks/useHaptics'
 import { cn } from '@/lib/utils'
 import { ordinal } from '@/lib/format'
 
@@ -22,8 +23,14 @@ const SUBHEAD: Record<Alignment, string> = {
 
 export function GameOver({ game }: { game: Game }) {
   const { store, dispatch } = useStore()
+  const haptics = useHaptics()
   const [confirmUndo, setConfirmUndo] = useState(false)
   const winner = game.phase.kind === 'over' ? game.phase.winner : 'town'
+
+  // Lands once when the final screen opens: the winning side is named.
+  useEffect(() => {
+    haptics.win()
+  }, [haptics.win])
 
   return (
     <Screen

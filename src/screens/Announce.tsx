@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Action } from '@/components/Action'
 import { Screen } from '@/components/Screen'
 import { AdjustSheet } from '@/components/AdjustSheet'
@@ -5,13 +6,20 @@ import { ROLES } from '@/domain/roles'
 import { seatById } from '@/domain/engine'
 import type { Game } from '@/domain/types'
 import { useStore } from '@/hooks/useStore'
+import { useHaptics } from '@/hooks/useHaptics'
 import { ordinal } from '@/lib/format'
 
 /** Dawn. The night's outcome, read aloud by the host. */
 export function NightResult({ game }: { game: Game }) {
   const { dispatch } = useStore()
+  const haptics = useHaptics()
   const victim = seatById(game, game.lastNightVictim)
   const saved = seatById(game, game.lastNightSaved)
+
+  // The one beat the whole table is waiting on: the dead are named.
+  useEffect(() => {
+    if (victim) haptics.death()
+  }, [victim?.id])
 
   return (
     <Screen
@@ -54,7 +62,12 @@ export function NightResult({ game }: { game: Game }) {
 /** The table has voted. */
 export function DayResult({ game }: { game: Game }) {
   const { dispatch } = useStore()
+  const haptics = useHaptics()
   const lynched = seatById(game, game.lastLynched)
+
+  useEffect(() => {
+    if (lynched) haptics.death()
+  }, [lynched?.id])
 
   return (
     <Screen
