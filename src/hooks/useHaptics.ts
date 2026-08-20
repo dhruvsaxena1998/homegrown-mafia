@@ -1,32 +1,43 @@
-import { useCallback } from 'react'
+import { WebHaptics } from 'web-haptics'
+import type { HapticInput } from 'web-haptics'
 
-function canVibrate(): boolean {
-  return typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function'
+/**
+ * Wrapper over WebHaptics. On Android it drives the Vibration API; on iOS —
+ * which has no Vibration API — the library appends a hidden native switch and
+ * toggles it, so the beat lands there too instead of silently doing nothing.
+ *
+ * A single shared instance: the library appends that hidden switch element the
+ * first time it fires on an unsupported device, and one is all the page needs.
+ * `debug` (audio clicks) and `showSwitch` (a visible toggle) stay off — this is
+ * a social deduction game played in the dark, and audible/visual cues would
+ * leak information to the room.
+ */
+let instance: WebHaptics | null = null
+
+function engine(): WebHaptics | null {
+  if (typeof window === 'undefined') return null
+  if (!instance) instance = new WebHaptics()
+  return instance
+}
+
+function fire(pattern: HapticInput): void {
+  void engine()?.trigger(pattern)
 }
 
 /**
- * Wrapper over `navigator.vibrate`, which is silently missing on iOS Safari and
- * some desktop browsers. Every call is a no-op there, so the game is unchanged.
+ * Stable references — these never change identity between renders, so they are
+ * safe in effect dependency arrays.
  */
 export function useHaptics() {
-  const vibrate = useCallback((pattern: number | number[]) => {
-    if (!canVibrate()) return
-    try {
-      navigator.vibrate(pattern)
-    } catch {
-      // Some engines throw rather than ignore; the beat is not worth a crash.
-    }
-  }, [])
-
   return {
     /** A role card blooms into view out of the dark. */
-    reveal: useCallback(() => vibrate([15, 25, 15]), [vibrate]),
+    reveal: () => fire([15, 25, 15]),
     /** Someone is named dead at dawn or on the gallows. */
-    death: useCallback(() => vibrate([90]), [vibrate]),
+    death: () => fire([90]),
     /** The game ends and the winning side is read out. */
-    win: useCallback(() => vibrate([40, 30, 40, 30, 140]), [vibrate]),
+    win: () => fire([40, 30, 40, 30, 140]),
     /** A soft beat — the argument timer running out. */
-    alert: useCallback(() => vibrate([0, 60, 40, 60]), [vibrate]),
-    vibrate,
+    alert: () => fire([0, 60, 40, 60]),
+    vibrate: fire,
   }
 }
