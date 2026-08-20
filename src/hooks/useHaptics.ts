@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react'
 import { WebHaptics } from 'web-haptics'
 import type { HapticInput } from 'web-haptics'
 
@@ -22,6 +23,33 @@ function engine(): WebHaptics | null {
 
 function fire(pattern: HapticInput): void {
   void engine()?.trigger(pattern)
+}
+
+// ---------------------------------------------------------------- debug audio
+
+/**
+ * `debug` plays an audible click for every beat instead of a silent no-op on
+ * devices without a vibration motor — a way to hear the haptics on a desktop.
+ * It is a testing aid, so it lives behind a header toggle, off by default.
+ */
+let debugEnabled = false
+const debugListeners = new Set<() => void>()
+
+export function setHapticsDebug(next: boolean): void {
+  if (debugEnabled === next) return
+  debugEnabled = next
+  engine()?.setDebug(next)
+  for (const listener of debugListeners) listener()
+}
+
+function subscribeDebug(listener: () => void): () => void {
+  debugListeners.add(listener)
+  return () => debugListeners.delete(listener)
+}
+
+export function useHapticsDebug() {
+  const debug = useSyncExternalStore(subscribeDebug, () => debugEnabled)
+  return { debug, setDebug: setHapticsDebug, toggle: () => setHapticsDebug(!debug) }
 }
 
 /**
