@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { RulesSheet } from '@/components/RulesSheet'
 import { QuitGame } from '@/components/QuitGame'
+import { HapticsDebugToggle } from '@/components/HapticsDebugToggle'
 import { useStore } from '@/hooks/useStore'
 import { cn } from '@/lib/utils'
 
@@ -49,6 +50,7 @@ export function Screen({ ground, eyebrow, aside, children, footer, className }: 
             from wherever the game has got to. */}
         <span className="flex shrink-0 items-center gap-3.5">
           {aside}
+          <HapticsDebugToggle />
           <RulesSheet />
           <QuitGame />
         </span>
