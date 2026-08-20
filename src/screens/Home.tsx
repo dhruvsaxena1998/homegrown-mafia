@@ -1,6 +1,7 @@
 import { Action, QuietAction } from '@/components/Action'
 import { Screen } from '@/components/Screen'
 import { useStore } from '@/hooks/useStore'
+import { APP_VERSION } from '@/lib/version'
 
 export function Home({
   onNewGame,
@@ -42,6 +43,7 @@ export function Home({
           One phone, one host, and everyone else in the dark. Deal the cards, run
           the night, and let the table argue.
         </p>
+        <span className="eyebrow text-muted-foreground">v{APP_VERSION}</span>
       </div>
     </Screen>
   )

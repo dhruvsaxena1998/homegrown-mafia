@@ -1,8 +1,13 @@
+import { readFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { ensureCert } from './scripts/make-cert.mjs'
+
+// Read at config time so the version shown on the home screen matches the
+// package.json that was actually built and deployed.
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8'))
 
 // Service workers, Wake Lock and crypto.randomUUID all need a secure context.
 // localhost counts as one; a LAN address does not, so testing on a phone needs
@@ -12,6 +17,11 @@ const https = secure ? ensureCert() : undefined
 
 // https://vite.dev/config/
 export default defineConfig({
+  define: {
+    // Injected from package.json so the version shown on the home screen
+    // always matches whatever was actually built and deployed.
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   server: {
     host: true,
     https: https && { key: https.key, cert: https.cert },
