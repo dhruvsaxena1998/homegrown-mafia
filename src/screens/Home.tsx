@@ -19,7 +19,6 @@ export function Home({
       className="justify-end"
       footer={
         <>
-          <Action onClick={onNewGame}>New game</Action>
           <QuietAction
             disabled={store.history.length === 0}
             onClick={onHistory}
@@ -28,6 +27,7 @@ export function Home({
               ? `Past games · ${store.history.length}`
               : 'No games played yet'}
           </QuietAction>
+          <Action onClick={onNewGame}>New game</Action>
         </>
       }
     >

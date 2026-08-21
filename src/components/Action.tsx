@@ -47,6 +47,9 @@ export function Action({
   )
 }
 
+/** Height of QuietAction — keep footers from jumping when a secondary is absent. */
+export const QUIET_ACTION_H = 'h-11'
+
 /** De-emphasised escape hatches: back, skip, clear. Speaks in the eyebrow voice. */
 export function QuietAction({
   children,
@@ -71,4 +74,13 @@ export function QuietAction({
       {children}
     </button>
   )
+}
+
+/**
+ * Secondary footer row above the primary CTA. Pass children when the escape is
+ * available; omit them and the same height is reserved so the primary stays put.
+ */
+export function QuietSlot({ children }: { children?: ReactNode }) {
+  if (children) return <>{children}</>
+  return <div className={QUIET_ACTION_H} aria-hidden />
 }

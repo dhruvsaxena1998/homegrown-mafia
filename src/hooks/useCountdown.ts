@@ -5,14 +5,21 @@ import { useEffect, useRef, useState } from 'react'
  * than decrementing each tick, so it stays honest through background throttling
  * and is unaffected by the host pausing to let the room breathe.
  */
-export function useCountdown(total: number, onExpire?: () => void) {
+export function useCountdown(
+  total: number,
+  onExpire?: () => void,
+  options?: { autoStartAfterMs?: number },
+) {
+  const autoStartAfterMs = options?.autoStartAfterMs ?? 0
   const [remaining, setRemaining] = useState(total)
   const [running, setRunning] = useState(false)
   const endRef = useRef(0)
   const intervalRef = useRef<number | null>(null)
   const expiredRef = useRef(false)
+  const remainingRef = useRef(total)
   const onExpireRef = useRef(onExpire)
   onExpireRef.current = onExpire
+  remainingRef.current = remaining
 
   const stopLoop = () => {
     if (intervalRef.current !== null) {
@@ -23,6 +30,7 @@ export function useCountdown(total: number, onExpire?: () => void) {
 
   const update = () => {
     const left = Math.max(0, Math.round((endRef.current - Date.now()) / 1000))
+    remainingRef.current = left
     setRemaining(left)
     if (left <= 0) {
       stopLoop()
@@ -35,9 +43,9 @@ export function useCountdown(total: number, onExpire?: () => void) {
   }
 
   const start = () => {
-    if (remaining <= 0) return
+    if (remainingRef.current <= 0) return
     expiredRef.current = false
-    endRef.current = Date.now() + remaining * 1000
+    endRef.current = Date.now() + remainingRef.current * 1000
     setRunning(true)
     stopLoop()
     intervalRef.current = window.setInterval(update, 250)
@@ -45,7 +53,9 @@ export function useCountdown(total: number, onExpire?: () => void) {
 
   const pause = () => {
     if (!running) return
-    setRemaining(Math.max(0, Math.round((endRef.current - Date.now()) / 1000)))
+    const left = Math.max(0, Math.round((endRef.current - Date.now()) / 1000))
+    remainingRef.current = left
+    setRemaining(left)
     setRunning(false)
     stopLoop()
   }
@@ -54,10 +64,19 @@ export function useCountdown(total: number, onExpire?: () => void) {
     stopLoop()
     setRunning(false)
     expiredRef.current = false
+    remainingRef.current = total
     setRemaining(total)
   }
 
-  useEffect(() => stopLoop(), [])
+  useEffect(() => stopLoop, [])
+
+  useEffect(() => {
+    if (autoStartAfterMs <= 0) return
+    const id = window.setTimeout(() => start(), autoStartAfterMs)
+    return () => clearTimeout(id)
+    // Arm once for this countdown instance (one day argument).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStartAfterMs])
 
   return { remaining, running, start, pause, reset, expired: remaining <= 0 }
 }

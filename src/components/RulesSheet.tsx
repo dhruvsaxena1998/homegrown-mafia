@@ -120,10 +120,11 @@ export function RulesSheet() {
 
           <Section title="The day">
             <p className="text-sm leading-relaxed text-muted-foreground">
-              The town wakes, hears who died, and argues. When the table settles
-              on a name, that player is voted out and the app records it. The
-              table can also decide nobody hangs. Voting happens out loud, not on
-              the phone.
+              The town wakes, hears who died, and argues. When the floor is
+              ready the host runs a roll-call vote: each living player names one
+              person, the phone tallies, and the leader is eliminated. A tie
+              wipes the board and everyone votes again. The table can also decide
+              nobody hangs.
             </p>
           </Section>
 

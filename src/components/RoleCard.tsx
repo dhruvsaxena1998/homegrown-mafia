@@ -39,7 +39,8 @@ export function RoleCard({ roleId, allyNames, progress }: Props) {
       }}
       aria-hidden={developed < 1}
     >
-      <div className="flex flex-col gap-5 px-6 py-9">
+      {/* Fixed min height so Mafia (allies block) and town cards match in the hand. */}
+      <div className="flex min-h-[17.5rem] flex-col gap-5 px-6 py-9">
         <div className="flex items-baseline justify-between gap-3">
           <span className="eyebrow text-muted-foreground">Your role</span>
           {/* The Mafia card's headline already names the side; only town roles
@@ -64,24 +65,27 @@ export function RoleCard({ roleId, allyNames, progress }: Props) {
           {role.cardText}
         </p>
 
-        {/* The only thing on this card nobody else will ever tell them. */}
-        {allyNames.length > 0 && (
-          <>
-            <div className="h-px w-full bg-foreground/15" />
-            <div className="flex gap-3">
-              <span className="eyebrow w-[4.25rem] shrink-0 pt-[0.2rem] text-muted-foreground">
-                With you
-              </span>
-              <span className="flex flex-1 flex-col gap-1">
-                {allyNames.map((name) => (
-                  <span key={name} className="font-mono text-sm tracking-tight">
-                    {name}
-                  </span>
-                ))}
-              </span>
-            </div>
-          </>
-        )}
+        {/* Always reserve the allies band so every role card is the same height.
+            Only Mafia fills it — the only thing on this card nobody else will tell them. */}
+        <div className="mt-auto flex min-h-[3.75rem] flex-col gap-3">
+          {allyNames.length > 0 && (
+            <>
+              <div className="h-px w-full bg-foreground/15" />
+              <div className="flex gap-3">
+                <span className="eyebrow w-[4.25rem] shrink-0 pt-[0.2rem] text-muted-foreground">
+                  With you
+                </span>
+                <span className="flex flex-1 flex-col gap-1">
+                  {allyNames.map((name) => (
+                    <span key={name} className="font-mono text-sm tracking-tight">
+                      {name}
+                    </span>
+                  ))}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -230,6 +230,7 @@ export function Setup({ onCancel }: { onCancel: () => void }) {
         }
         footer={
           <>
+            <QuietAction onClick={onCancel}>Back</QuietAction>
             <Action
               disabled={!countOk}
               marker={countOk ? '\u2192' : null}
@@ -243,7 +244,6 @@ export function Setup({ onCancel }: { onCancel: () => void }) {
                     ? `Add ${MIN_SELECTED - store.roster.length} more names`
                     : `Tap ${MIN_SELECTED - chosen.length} more who are here`}
             </Action>
-            <QuietAction onClick={onCancel}>Back</QuietAction>
           </>
         }
       >
@@ -320,6 +320,7 @@ export function Setup({ onCancel }: { onCancel: () => void }) {
       eyebrow="Who is hosting"
       footer={
         <>
+          <QuietAction onClick={() => setStep('who')}>Back</QuietAction>
           <Action
             disabled={!hostId || !isPlayableCount(playing)}
             marker={hostId ? '\u2192' : null}
@@ -337,7 +338,6 @@ export function Setup({ onCancel }: { onCancel: () => void }) {
           >
             {hostId ? `Deal ${playing} cards` : 'Pick a host'}
           </Action>
-          <QuietAction onClick={() => setStep('who')}>Back</QuietAction>
         </>
       }
     >
@@ -389,7 +389,8 @@ export function Setup({ onCancel }: { onCancel: () => void }) {
         <span className="flex flex-col gap-1">
           <span className="text-sm font-medium">Day argument timer</span>
           <span className="text-xs leading-relaxed text-muted-foreground">
-            Counts the floor down. The host still records the vote by hand.
+            Starts a few seconds after daybreak. Soft aid only — the vote is
+            still taken seat by seat when the floor is ready.
           </span>
         </span>
         <div className="flex gap-2">

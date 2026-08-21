@@ -18,7 +18,7 @@ import type { Game, Seat } from '@/domain/types'
 import { useStore } from '@/hooks/useStore'
 import { useHaptics } from '@/hooks/useHaptics'
 
-type View = 'menu' | 'pick' | 'card'
+type View = 'menu' | 'pick' | 'card' | 'rollcall'
 
 /**
  * The host's escape hatch. Real games miscount, reveal by accident, and drop
@@ -39,6 +39,24 @@ export function AdjustSheet({ game }: { game: Game }) {
     }
   }, [open])
 
+  const title =
+    view === 'menu'
+      ? 'Adjust'
+      : view === 'pick'
+        ? 'Show a card again'
+        : view === 'rollcall'
+          ? 'Roll call'
+          : showing?.name
+
+  const description =
+    view === 'menu'
+      ? 'Fix a miscount without abandoning the game.'
+      : view === 'pick'
+        ? 'Only do this if someone genuinely missed their card.'
+        : view === 'rollcall'
+          ? 'Kill or revive when the table and the phone disagree.'
+          : 'Hand the phone over before they hold.'
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -49,73 +67,35 @@ export function AdjustSheet({ game }: { game: Game }) {
 
       <DialogContent className="flex max-h-[85dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-md">
         <DialogHeader className="px-6 pt-6 pb-4 text-left">
-          <DialogTitle className="display-lg text-2xl">
-            {view === 'menu' ? 'Adjust' : view === 'pick' ? 'Show a card again' : showing?.name}
-          </DialogTitle>
-          <DialogDescription className="text-sm">
-            {view === 'menu'
-              ? 'Fix a miscount without abandoning the game.'
-              : view === 'pick'
-                ? 'Only do this if someone genuinely missed their card.'
-                : 'Hand the phone over before they hold.'}
-          </DialogDescription>
+          <DialogTitle className="display-lg text-2xl">{title}</DialogTitle>
+          <DialogDescription className="text-sm">{description}</DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-6 pb-6">
           {view === 'menu' && (
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-3">
               <Button
                 variant="secondary"
                 disabled={!canUndo(store)}
-                className="h-12 w-full"
+                className="h-14 w-full text-base"
                 onClick={() => dispatch({ type: 'UNDO' })}
               >
                 Undo last action
               </Button>
 
-              <section className="flex flex-col gap-2">
-                <span className="eyebrow text-muted-foreground">Roll call</span>
-                {game.seats.map((seat, i) =>
-                  pending === seat.id ? (
-                    <ConfirmRow
-                      key={seat.id}
-                      question={
-                        seat.alive ? `Kill ${seat.name}?` : `Bring ${seat.name} back?`
-                      }
-                      confirmLabel={seat.alive ? 'Kill' : 'Revive'}
-                      tone={seat.alive ? 'destructive' : 'secondary'}
-                      onCancel={() => setPending(null)}
-                      onConfirm={() => {
-                        dispatch(
-                          seat.alive
-                            ? { type: 'ADJUST_KILL', seatId: seat.id }
-                            : { type: 'ADJUST_REVIVE', seatId: seat.id },
-                        )
-                        setPending(null)
-                      }}
-                    />
-                  ) : (
-                    <SeatRow
-                      key={seat.id}
-                      index={i + 1}
-                      name={seat.name}
-                      dead={!seat.alive}
-                      tag={seat.alive ? 'Alive' : 'Dead'}
-                      tagTone={seat.alive ? 'muted' : 'stamp'}
-                      onClick={() => setPending(seat.id)}
-                    />
-                  ),
-                )}
-              </section>
-
-              {/* Ending the game lives in the header now (✕), next to the
-                  rules, so it is reachable without opening this sheet. */}
               <Button
-                variant="ghost"
-                className="h-12 w-full text-muted-foreground"
+                className="h-14 w-full text-base"
                 onClick={() => setView('pick')}
               >
                 Show someone their card again
+              </Button>
+
+              <Button
+                variant="ghost"
+                className="mt-3 h-11 w-full text-muted-foreground"
+                onClick={() => setView('rollcall')}
+              >
+                Fix roll call
               </Button>
             </div>
           )}
@@ -139,6 +119,52 @@ export function AdjustSheet({ game }: { game: Game }) {
                 variant="ghost"
                 className="mt-2 h-11 w-full text-muted-foreground"
                 onClick={() => setView('menu')}
+              >
+                Back
+              </Button>
+            </div>
+          )}
+
+          {view === 'rollcall' && (
+            <div className="flex flex-col gap-2">
+              {game.seats.map((seat, i) =>
+                pending === seat.id ? (
+                  <ConfirmRow
+                    key={seat.id}
+                    question={
+                      seat.alive ? `Kill ${seat.name}?` : `Bring ${seat.name} back?`
+                    }
+                    confirmLabel={seat.alive ? 'Kill' : 'Revive'}
+                    tone={seat.alive ? 'destructive' : 'secondary'}
+                    onCancel={() => setPending(null)}
+                    onConfirm={() => {
+                      dispatch(
+                        seat.alive
+                          ? { type: 'ADJUST_KILL', seatId: seat.id }
+                          : { type: 'ADJUST_REVIVE', seatId: seat.id },
+                      )
+                      setPending(null)
+                    }}
+                  />
+                ) : (
+                  <SeatRow
+                    key={seat.id}
+                    index={i + 1}
+                    name={seat.name}
+                    dead={!seat.alive}
+                    tag={seat.alive ? 'Alive' : 'Dead'}
+                    tagTone={seat.alive ? 'muted' : 'stamp'}
+                    onClick={() => setPending(seat.id)}
+                  />
+                ),
+              )}
+              <Button
+                variant="ghost"
+                className="mt-2 h-11 w-full text-muted-foreground"
+                onClick={() => {
+                  setPending(null)
+                  setView('menu')
+                }}
               >
                 Back
               </Button>

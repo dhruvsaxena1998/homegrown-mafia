@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Action, QuietAction } from '@/components/Action'
+import { Action, QuietAction, QuietSlot } from '@/components/Action'
 import { Screen } from '@/components/Screen'
 import { SeatRow } from '@/components/SeatRow'
 import { ConfirmRow } from '@/components/ConfirmRow'
@@ -62,6 +62,17 @@ export function Night({ game }: { game: Game }) {
           />
         ) : (
           <>
+            <QuietSlot>
+              {target ? (
+                <QuietAction
+                  onClick={() =>
+                    dispatch({ type: 'SET_TARGET', roleId: role.id, seatId: null })
+                  }
+                >
+                  Clear choice
+                </QuietAction>
+              ) : null}
+            </QuietSlot>
             <Action
               onClick={() =>
                 target ? dispatch({ type: 'NIGHT_NEXT' }) : setConfirmSkip(true)
@@ -69,13 +80,6 @@ export function Night({ game }: { game: Game }) {
             >
               {role.sleepPrompt}
             </Action>
-            {target && (
-              <QuietAction
-                onClick={() => dispatch({ type: 'SET_TARGET', roleId: role.id, seatId: null })}
-              >
-                Clear choice
-              </QuietAction>
-            )}
           </>
         )
       }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Action, QuietAction } from '@/components/Action'
+import { Action, QuietAction, QuietSlot } from '@/components/Action'
 import { ConfirmRow } from '@/components/ConfirmRow'
 import { Screen } from '@/components/Screen'
 import { ROLES } from '@/domain/roles'
@@ -109,25 +109,28 @@ export function History({ onBack }: { onBack: () => void }) {
       eyebrow={`${store.history.length} played`}
       footer={
         <>
+          <QuietSlot>
+            {store.history.length > 0 ? (
+              confirmClear ? (
+                <ConfirmRow
+                  question="Delete every past game?"
+                  confirmLabel="Delete"
+                  onCancel={() => setConfirmClear(false)}
+                  onConfirm={() => {
+                    dispatch({ type: 'CLEAR_HISTORY' })
+                    setConfirmClear(false)
+                  }}
+                />
+              ) : (
+                <QuietAction onClick={() => setConfirmClear(true)}>
+                  Clear history
+                </QuietAction>
+              )
+            ) : null}
+          </QuietSlot>
           <Action variant="quiet" marker={null} onClick={onBack}>
             Back
           </Action>
-          {store.history.length > 0 &&
-            (confirmClear ? (
-              <ConfirmRow
-                question="Delete every past game?"
-                confirmLabel="Delete"
-                onCancel={() => setConfirmClear(false)}
-                onConfirm={() => {
-                  dispatch({ type: 'CLEAR_HISTORY' })
-                  setConfirmClear(false)
-                }}
-              />
-            ) : (
-              <QuietAction onClick={() => setConfirmClear(true)}>
-                Clear history
-              </QuietAction>
-            ))}
         </>
       }
     >

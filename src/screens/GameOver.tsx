@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Action, QuietAction } from '@/components/Action'
+import { Action, QuietAction, QuietSlot } from '@/components/Action'
 import { ConfirmRow } from '@/components/ConfirmRow'
 import { Screen } from '@/components/Screen'
 import { ROLES } from '@/domain/roles'
@@ -47,17 +47,19 @@ export function GameOver({ game }: { game: Game }) {
           />
         ) : (
           <>
-            <Action onClick={() => dispatch({ type: 'ARCHIVE_GAME', now: Date.now() })}>
-              Save and finish
-            </Action>
             {/* A mistyped lynch or a stray tap in Roll Call can end a game that
                 was not over. Undo restores an exact earlier state, which is the
                 only recovery from here with a well-defined answer. */}
-            {canUndo(store) && (
-              <QuietAction onClick={() => setConfirmUndo(true)}>
-                Undo last action
-              </QuietAction>
-            )}
+            <QuietSlot>
+              {canUndo(store) ? (
+                <QuietAction onClick={() => setConfirmUndo(true)}>
+                  Undo last action
+                </QuietAction>
+              ) : null}
+            </QuietSlot>
+            <Action onClick={() => dispatch({ type: 'ARCHIVE_GAME', now: Date.now() })}>
+              Save and finish
+            </Action>
           </>
         )
       }

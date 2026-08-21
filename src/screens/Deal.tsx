@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Screen } from '@/components/Screen'
-import { Action, QuietAction } from '@/components/Action'
+import { Action, QuietAction, QuietSlot } from '@/components/Action'
 import { ConfirmRow } from '@/components/ConfirmRow'
 import { RoleCard } from '@/components/RoleCard'
 import { useHoldToReveal } from '@/hooks/useHoldToReveal'
@@ -49,6 +49,13 @@ export function Deal({ game }: { game: Game }) {
           />
         ) : (
           <>
+            <QuietSlot>
+              {index > 0 && canUndo(store) ? (
+                <QuietAction onClick={() => setConfirmBack(true)}>
+                  Back a card
+                </QuietAction>
+              ) : null}
+            </QuietSlot>
             <Action
               variant={everRevealed ? 'solid' : 'quiet'}
               disabled={!everRevealed}
@@ -57,11 +64,6 @@ export function Deal({ game }: { game: Game }) {
             >
               {everRevealed ? 'Done — pass on' : 'Read your card first'}
             </Action>
-            {index > 0 && canUndo(store) && (
-              <QuietAction onClick={() => setConfirmBack(true)}>
-                Back a card
-              </QuietAction>
-            )}
           </>
         )
       }
